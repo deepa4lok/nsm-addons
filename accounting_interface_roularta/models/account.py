@@ -159,7 +159,8 @@ class AccountInvoice(models.Model):
                 'number':invoice_number,
                 'period':datetime.strptime(self.date, '%Y-%m-%d').strftime('%Y/%m'),
                 'curcode':self.currency_id.id,
-                'date':datetime.strptime(self.date, '%Y-%m-%d').strftime('%Y-%m-%d')
+                'date':datetime.strptime(self.date, '%Y-%m-%d').strftime('%Y-%m-%d'),
+                'status': 'draft',
             }
 
             summary_seq = 1
@@ -256,7 +257,8 @@ class AccountInvoice(models.Model):
 
             for mline in self.move_id.line_ids. \
                 filtered(lambda ml: ml.account_id not in (invoice_tax_account+self.account_id)):
-                tax_data = tax_datas[mline.tax_ids[0]]
+
+                tax_data = tax_datas[mline.tax_ids[0]] if mline.tax_ids else {'doc_type': '', 'short_name':''}
 
                 aa_code = mline.analytic_account_id and str(mline.analytic_account_id.code)
 
@@ -319,7 +321,7 @@ class AccountInvoice(models.Model):
                     'code': tax_data['doc_type'],
                     'short_name': tax_data['short_name'],
                     'ext_ref4': aa_code,
-                    'description': '<![CDATA[Geld ? Recht Teaserbox Nieuwsbrief]]>',
+                    'description': mline.name,
                     'value': total_tax_amount,
                 }
                 summary_lines.append((0, 0, lvals))
@@ -586,17 +588,25 @@ class MoveLinefromOdootoRoularta(models.Model):
                     OrderedDict([
                         ('trans:TaxInclusive',False),
                         ('trans:ExtRef4',line.ext_ref4),
-                        ('trans:Description','<![CDATA[Geld ? Recht Teaserbox Nieuwsbrief]]>'),
-                        ('trans:Taxes', OrderedDict([
-                            ('trans:Tax', OrderedDict([
-                                ('trans:Code', line.code),
-                                ('trans:ShortName', line.short_name),
-                                ('trans:Value', line.value)
-                                 ])
-                            )])
-                        ),
+                        ('trans:Description',line.description),
+
                     ])
                 )
+
+                if line.code:
+                    entry.update(
+                        OrderedDict([
+                            ('trans:Taxes', OrderedDict([
+                                ('trans:Tax', OrderedDict([
+                                    ('trans:Code', line.code),
+                                    ('trans:ShortName', line.short_name),
+                                    ('trans:Value', line.value)
+                                ])
+                                 )])
+                             ),
+                        ])
+                    )
+
             elif line.line_type == 'tax':
                 entry.update(
                     OrderedDict([
