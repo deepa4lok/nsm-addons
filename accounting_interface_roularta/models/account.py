@@ -106,11 +106,24 @@ class AccountInvoice(models.Model):
         # if len(self.tax_line_ids.ids) > 1:
         #     raise UserError(_("Cant't send to roularta! More than one tax line!"))
         tax_dic = {}
-        for tax_line in self.tax_line_ids:
+        tax_ids = self.tax_line_ids
+        if not self.tax_line_ids:
+            tax_type = 'sale'
+            if type in ('in_invoice', 'in_refund'):
+                tax_type = 'purchase'
+            tax_ids = self.env['account.tax'].search([('type_tax_use', '=', tax_type), ('roularta_no_tax', '=', True)], limit=1)
+            if not tax_ids:
+                raise UserError(_("'Roularta NO Tax' not found!"))
+
+        for tax_line in tax_ids:
             d_type = doc_type
             s_name = short_name
-            tax = tax_line.tax_id
-            tax_amt = '0'+str(int(tax.amount)) if len(str(int(tax.amount))) == 1 else str(int(tax.amount))
+            if tax_line._name == 'account.invoice.tax':
+                tax = tax_line.tax_id
+                tax_amt = '0'+str(int(tax.amount)) if len(str(int(tax.amount))) == 1 else str(int(tax.amount))
+            if tax_line._name == 'account.tax':
+                tax = tax_line
+                tax_amt = '00'
             if tax.name in domestic_tax_name:
                 d_type += 'L'+tax_amt
                 s_name += ' '+'loc'+' '+tax_amt
@@ -131,7 +144,7 @@ class AccountInvoice(models.Model):
                 else:
                     raise UserError(_('Tax document not found!'))
 
-            tax_dic[tax_line.tax_id] = {'doc_type':d_type, 'short_name':s_name}
+            tax_dic[tax] = {'doc_type':d_type, 'short_name':s_name}
         return tax_dic
 
     @job
@@ -170,7 +183,7 @@ class AccountInvoice(models.Model):
             sale_invoice = self.invoice_line_ids.mapped('sale_order_id')
             vendor_invoice = self.invoice_line_ids.mapped('purchase_id')
 
-            move_line = self.env['move.line.odooto.roularta']
+            # move_line = self.env['move.line.odooto.roularta']
             summary_lines=[]
             operating_code = self.operating_unit_id.code
             invoice_type = self.type
@@ -258,7 +271,7 @@ class AccountInvoice(models.Model):
             for mline in self.move_id.line_ids. \
                 filtered(lambda ml: ml.account_id not in (invoice_tax_account+self.account_id)):
 
-                tax_data = tax_datas[mline.tax_ids[0]] if mline.tax_ids else {'doc_type': '', 'short_name':''}
+                tax_data = tax_datas[mline.tax_ids[0]] if mline.tax_ids else tax_datas.values()[0]
 
                 aa_code = mline.analytic_account_id and str(mline.analytic_account_id.code)
 
@@ -267,7 +280,7 @@ class AccountInvoice(models.Model):
                 else:
                     ana_line_sense = 'credit'
 
-                taxes = mline.tax_ids.compute_all(mline.credit, mline.currency_id,
+                taxes = mline.tax_ids.compute_all((mline.credit or mline.debit), mline.currency_id,
                                                   mline.quantity, mline.product_id, mline.partner_id)['taxes']
                 total_tax_amount = 0.0
                 for tax in taxes:
@@ -319,55 +332,57 @@ class AccountInvoice(models.Model):
 
             # Tax line
             tax_mv_lines = self.move_id.line_ids.filtered(lambda ml: ml.account_id in invoice_tax_account)
+
+            if not tax_mv_lines:
+                tax_mv_lines = self.tax_line_ids
+
+            if not tax_mv_lines and not self.tax_line_ids:
+                tax_mv_lines = tax_datas.keys()
+
             for mline in tax_mv_lines:
+                account_id = mline.account_id
+                lvals = {}
 
-                if not mline.account_id.ext_account:
-                    raise UserError(_('%s external account is missing!') % mline.account_id.name)
+                if mline._name == 'account.move.line':
+                    lvals.update({'move_line_id': mline.id,
+                                  'doc_value': mline.credit or mline.debit,
+                                  'code': tax_datas[mline.tax_line_id]['doc_type'],
+                                  'due_date': datetime.strptime(mline.date, '%Y-%m-%d').strftime(
+                                      '%Y-%m-%d %H:%M:%S'),
+                                  })
 
-                lvals = {
-                    'move_line_id': mline.id,
+                elif mline._name == 'account.invoice.tax':
+                    lvals.update({
+                        'doc_value': mline.amount,
+                        'code': tax_datas[mline.tax_id]['doc_type'],
+                        'due_date': datetime.strptime(self.date_due, '%Y-%m-%d').strftime('%Y-%m-%d %H:%M:%S'),
+                    })
+                elif tax_datas:
+                    lvals.update({
+                        'doc_value': 0,
+                        'code': tax_datas.values()[0]['doc_type'],
+                        'due_date': datetime.strptime(self.date_due, '%Y-%m-%d').strftime('%Y-%m-%d %H:%M:%S'),
+                    })
+                    if type in ('out_refund', 'in_refund'):
+                        account_id = mline.refund_account_id
+
+                if not account_id.ext_account:
+                    raise UserError(_('%s external account is missing!') % account_id.name)
+
+                lvals.update({
                     'number': summary_seq,
                     'dest_code': operating_code,
-                    'account_code': mline.account_id.ext_account,
-                    'doc_value': mline.credit or mline.debit,
+                    'account_code': account_id.ext_account,
                     'dual_rate': 40.339900000,
                     'doc_rate': 1.000000000,
                     'line_type': 'tax',
-                    # 'line_sense': "credit" if sale_invoice else "debit",
                     'line_sense': ana_line_sense,
                     'line_origin': 'dl_orig_gentax',
-                    # 'code':'VFL21' if self.type == 'out_invoice' else 'VCL21',
-                    'code':tax_datas[mline.tax_line_id]['doc_type'],
-                    'due_date': datetime.strptime(mline.date, '%Y-%m-%d').strftime('%Y-%m-%d %H:%M:%S'),
-                    'doc_tax_turnover':self.amount_untaxed
-                }
+                    'doc_tax_turnover': self.amount_untaxed
+                })
+
                 summary_lines.append((0, 0, lvals))
                 summary_seq += 1
-
-            if not tax_mv_lines:
-                for inv_tax_line in self.tax_line_ids:
-                    if not inv_tax_line.account_id.ext_account:
-                        raise UserError(_('%s external account is missing!') % inv_tax_line.account_id.name)
-
-                    lvals = {
-                        # 'move_line_id': mline.id,
-                        'number': summary_seq,
-                        'dest_code': operating_code,
-                        'account_code': inv_tax_line.account_id.ext_account,
-                        'doc_value': inv_tax_line.amount,
-                        'dual_rate': 40.339900000,
-                        'doc_rate': 1.000000000,
-                        'line_type': 'tax',
-                        # 'line_sense': "credit" if sale_invoice else "debit",
-                        'line_sense': ana_line_sense,
-                        'line_origin': 'dl_orig_gentax',
-                        # 'code':'VFL21' if self.type == 'out_invoice' else 'VCL21',
-                        'code': tax_datas[inv_tax_line.tax_id]['doc_type'],
-                        'due_date': datetime.strptime(self.date_due, '%Y-%m-%d').strftime('%Y-%m-%d %H:%M:%S'),
-                        'doc_tax_turnover': self.amount_untaxed
-                    }
-                    summary_lines.append((0, 0, lvals))
-                    summary_seq += 1
 
             vals['roularta_invoice_line'] = summary_lines
             res = self.env['move.odooto.roularta'].sudo().create(vals)
@@ -699,5 +714,7 @@ class MoveLinefromOdootoRoularta(models.Model):
                 _('Error Roularta Interface call: %s') % (e))
         return response
 
+class AccountTax(models.Model):
+    _inherit = 'account.tax'
 
-
+    roularta_no_tax = fields.Boolean('Roularta No Tax')
