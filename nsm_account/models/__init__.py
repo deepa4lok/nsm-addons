@@ -22,3 +22,5 @@
 import res_partner
 import account
 import account_invoice
+import invoicing_property
+import sale

@@ -113,7 +113,7 @@ class AccountInvoice(models.Model):
                 tax_type = 'purchase'
             tax_ids = self.env['account.tax'].search([('type_tax_use', '=', tax_type), ('roularta_no_tax', '=', True)], limit=1)
             if not tax_ids:
-                raise UserError(_("'Roularta NO Tax' not found!"))
+                return [False, "Error: Roularta NO Tax' not found!"]
 
         for tax_line in tax_ids:
             d_type = doc_type
@@ -142,14 +142,23 @@ class AccountInvoice(models.Model):
                         d_type += 'I' + tax_amt
                         s_name += ' ' + 'IC' + ' ' + tax_amt
                 else:
-                    raise UserError(_('Tax document not found!'))
+                    return [False, "Error: Tax document not found!"]
 
             tax_dic[tax] = {'doc_type':d_type, 'short_name':s_name}
-        return tax_dic
+        return [True, tax_dic]
 
     @job
     def transfer_invoice_to_roularta(self):
         self.ensure_one()
+
+        def _create_exception_roularta_move(vals):
+            if not self.roularta_log_id:
+                res = self.env['move.odooto.roularta'].sudo().create(vals)
+                self.write({'roularta_log_id': res.id})
+            else:
+                self.roularta_log_id.write(vals)
+            return
+
         if self.roularta_sent:
             vals = {
                 'invoice_id': self.id,
@@ -157,11 +166,12 @@ class AccountInvoice(models.Model):
                 'reference': 'This Invoice will not be sent to Roularta',
                 'status':'draft'
             }
-            res = self.env['move.odooto.roularta'].sudo().create(vals)
-            return res
+            _create_exception_roularta_move(vals)
+            return
         else:
             invoice_number = re.sub("[^A-Z 0-9]", "", self.number,0,re.IGNORECASE)
-            tax_datas = self.parse_document_type()
+            parsing_status, tax_datas = self.parse_document_type()
+
             vals = {
                 'invoice_id':self.id,
                 'invoice_name': self.name,
@@ -175,6 +185,11 @@ class AccountInvoice(models.Model):
                 'date':datetime.strptime(self.date, '%Y-%m-%d').strftime('%Y-%m-%d'),
                 'status': 'draft',
             }
+
+            if not parsing_status:
+                vals.update({'reference': tax_datas})
+                _create_exception_roularta_move(vals)
+                return
 
             summary_seq = 1
             invoice_tax_account = self.tax_line_ids.mapped('account_id')
@@ -204,7 +219,6 @@ class AccountInvoice(models.Model):
 
 
             #Summary line
-
             for mline in self.move_id.line_ids.filtered(lambda ml: ml.account_id == self.account_id):
                 UserRef1 = invoice_number
                 if sale_invoice:
@@ -230,9 +244,11 @@ class AccountInvoice(models.Model):
                 #     msg = 'Partner and Parent have no RFF number.'
 
                 if not mline.account_id.ext_account:
-                    msg += ' %s external account is missing!\n' % mline.account_id.name
+                    msg += 'Summary Error: %s external account is missing!\n' % mline.account_id.name
                 if msg:
-                    raise UserError(_('%s')%msg)
+                    vals.update({'reference': msg})
+                    _create_exception_roularta_move(vals)
+                    return
 
                 lvals = {
                     'move_line_id': mline.id,
@@ -294,7 +310,7 @@ class AccountInvoice(models.Model):
                 #     msg = 'Partner %s Internal Reference is missing!\n'% partner.name
 
                 if not mline.account_id.ext_account:
-                    msg += ' %s external account is missing!\n' % mline.account_id.name
+                    msg += 'Analysis Error: %s external account is missing!\n' % mline.account_id.name
 
                 inv_line = self.invoice_line_ids.filtered(lambda inv_line: inv_line.account_id == mline.account_id and inv_line.product_id == mline.product_id)
                 if inv_line and inv_line[0] and inv_line[0].so_line_id:
@@ -303,10 +319,12 @@ class AccountInvoice(models.Model):
                     title_code = inv_line[0].adv_issue.code
 
                 if not title_code:
-                    msg += 'Product %s title code is missing!' % mline.product_id.name
+                    msg += 'Analysis Error: Product %s title code is missing!\n' % mline.product_id.name
 
                 if msg:
-                    raise UserError(_('%s')%msg)
+                    vals.update({'reference': msg})
+                    _create_exception_roularta_move(vals)
+                    return
 
                 lvals = {
                     'move_line_id': mline.id,
@@ -367,7 +385,10 @@ class AccountInvoice(models.Model):
                         account_id = mline.refund_account_id
 
                 if not account_id.ext_account:
-                    raise UserError(_('%s external account is missing!') % account_id.name)
+                    msg = "Tax Error: %s external account is missing!" % account_id.name
+                    vals.update({'reference': msg})
+                    _create_exception_roularta_move(vals)
+                    return
 
                 lvals.update({
                     'number': summary_seq,
@@ -385,7 +406,12 @@ class AccountInvoice(models.Model):
                 summary_seq += 1
 
             vals['roularta_invoice_line'] = summary_lines
-            res = self.env['move.odooto.roularta'].sudo().create(vals)
+            if self.roularta_log_id:
+                self.roularta_log_id.roularta_invoice_line.sudo().unlink()
+                self.roularta_log_id.sudo().write(vals)
+                res = self.roularta_log_id
+            else:
+                res = self.env['move.odooto.roularta'].sudo().create(vals)
             res.with_delay(
                 description=res.invoice_name
             ).roularta_content()
@@ -394,7 +420,19 @@ class AccountInvoice(models.Model):
     @api.multi
     def invoice_validate(self):
         res = super(AccountInvoice, self).invoice_validate()
-        self.action_roularta_interface()
+        if self.type in ('out_invoice', 'out_refund'):
+            self.action_roularta_interface()
+        return res
+
+    @api.multi
+    def action_invoice_auth(self):
+        invoice_lines = self.invoice_line_ids.filtered(lambda l: not l.adv_issue)
+        if invoice_lines:
+            adv_issue = self.env['sale.advertising.issue'].search([('supplier_default_issue', '=', True)], limit=1)
+            invoice_lines.write({'adv_issue':adv_issue.id})
+        res = super(AccountInvoice, self).action_invoice_auth()
+        if self.type in ('in_invoice', 'in_refund'):
+            self.action_roularta_interface()
         return res
 
     @api.multi

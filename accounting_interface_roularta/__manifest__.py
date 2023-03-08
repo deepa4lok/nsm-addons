@@ -19,7 +19,8 @@
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['account', 'sale_advertising_order'],
+    'depends': ['account', 'sale_advertising_order',
+                'account_invoice_2step_validation'],
 
     # always loaded
     'data': [
@@ -27,6 +28,7 @@
         'security/roularta_security.xml',
         'views/roularta_config_view.xml',
         'views/account_view.xml',
+        'views/sale_advertising_view.xml',
     ],
     'external_dependencies': {
         'python': ['xmltodict','requests'],

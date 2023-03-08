@@ -49,7 +49,8 @@ Enchances the Accounting Module according to NSM Requirements
                 'account_invoice_supplier_ref_unique',
                 'operating_unit_report_layout', 'sale',
                 'sale_advertising_operating_unit',
-                'account_operating_unit'
+                'account_operating_unit',
+                'publishing_invoicing'
     ],
     'data' : [
 	          "security/analytic_security_view.xml",

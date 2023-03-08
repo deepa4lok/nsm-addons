@@ -87,7 +87,7 @@
                       copy="false"
                       decoration-info="status in ('draft')" decoration-danger="status in ('failed')">
                     <field name="invoice_name"/>
-                    <field name="reference"/>
+                    <field name="number"/>
                     <field name="company_code"/>
                     <field name="status"/>
                 </tree>
@@ -179,8 +179,8 @@
               <field name="model">account.invoice</field>
               <field name="inherit_id" ref="account.invoice_supplier_form"/>
               <field name="arch" type="xml">
-                  <button name="action_invoice_draft" position="after">
-                    <button name="update_unit4" type="object" string="Update Unit4" states="open" groups="base.group_user"/>
+                <button name="action_invoice_draft" position="after">
+                    <button name="update_unit4" type="object" string="Update Unit4" states="auth" groups="base.group_user"/>
                 </button>
                 <xpath expr="//field[@name='invoice_line_ids']/tree/field[@name='product_id']" position="after">
                     <field name="adv_issue" />
