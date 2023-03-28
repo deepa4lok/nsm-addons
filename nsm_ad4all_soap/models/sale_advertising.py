@@ -510,7 +510,8 @@ class SofromOdootoAd4all(models.Model):
                     [('id', '=', line.advert_id)]).write(
                     {'ad4all_sent': True})
             else:
-                return
+                #If error/failure, try to send other lines
+                continue
         so = self.env['sale.order'].search(
             [('id', '=', self.sale_order_id.id)])
         sovals = {'date_sent_ad4all': datetime.datetime.now(),
