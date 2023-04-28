@@ -312,11 +312,7 @@ class AccountInvoice(models.Model):
                 if not mline.account_id.ext_account:
                     msg += 'Analysis Error: %s external account is missing!\n' % mline.account_id.name
 
-                inv_line = self.invoice_line_ids.filtered(lambda inv_line: inv_line.account_id == mline.account_id and inv_line.product_id == mline.product_id)
-                if inv_line and inv_line[0] and inv_line[0].so_line_id:
-                    title_code = inv_line[0].so_line_id and inv_line[0].so_line_id.title and inv_line[0].so_line_id.title.code
-                else:
-                    title_code = inv_line[0].adv_issue.code
+                title_code = mline.adv_issue and mline.adv_issue.code or False
 
                 if not title_code:
                     msg += 'Analysis Error: Product %s title code is missing!\n' % mline.product_id.name
@@ -450,6 +446,37 @@ class AccountInvoice(models.Model):
         if result and result[0] and result[0][2]:
             result[0][2].pop('roularta_sent', None)
         return result
+
+    def inv_line_characteristic_hashcode(self, invoice_line):
+        code = super(AccountInvoice, self).inv_line_characteristic_hashcode(
+            invoice_line)
+        hashcode = '%s-%s' % (
+            code, invoice_line.get('adv_issue', 'False'))
+        return hashcode
+
+
+    @api.model
+    def line_get_convert(self, line, part):
+        """Copy from invoice to move lines"""
+        res = super(AccountInvoice, self).line_get_convert(line, part)
+        res['adv_issue'] = line.get('adv_issue', False)
+        return res
+
+    @api.model
+    def invoice_line_move_line_get(self):
+        res = super(AccountInvoice, self).invoice_line_move_line_get()
+        for data in res:
+            invl_id = data.get('invl_id')
+            line = self.env['account.invoice.line'].browse(invl_id)
+            adv_issue = self.env['sale.advertising.issue']
+            if line.adv_issue:
+                adv_issue = line.adv_issue
+            elif line.so_line_id and line.so_line_id.adv_issue:
+                adv_issue = line.so_line_id.adv_issue
+
+            if adv_issue:
+                data['adv_issue'] = adv_issue.id
+        return res
 
 
 class AccountInvoiceLine(models.Model):
@@ -756,3 +783,9 @@ class AccountTax(models.Model):
     _inherit = 'account.tax'
 
     roularta_no_tax = fields.Boolean('Roularta No Tax')
+
+
+class AccountMoveLine(models.Model):
+    _inherit = 'account.move.line'
+
+    adv_issue = fields.Many2one('sale.advertising.issue', 'Advertising Issue')

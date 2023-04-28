@@ -175,6 +175,13 @@ class SaleOrder(models.Model):
                 raise UserError(
                     _('You have to fill in a material contact person.\n'
                       'Be aware, that the contact must have email and phone filled in.'))
+            lang_code = 'NL'
+            if self.published_customer:
+                partner = self.published_customer
+                if partner.lang:
+                    lang_code = partner.lang.split('_')[1]
+                    if lang_code == 'US':
+                        lang_code = 'EN'
             vals = {
                 'sale_order_id': self.id,
                 'order_name': self.name or '',
@@ -204,7 +211,9 @@ class SaleOrder(models.Model):
                     self.material_contact_person.phone or
                     self.material_contact_person.mobile or False,
                 'so_customer_contacts_contact_type': '',
-                'so_customer_contacts_contact_language': 'NL'
+                'so_customer_contacts_contact_language': 'NL',
+                'so_media_agency_contacts_contact2_language': lang_code
+
             }
             for key, value in vals.iteritems():
                 if value == False:
@@ -854,7 +863,7 @@ class SoLinefromOdootoAd4all(models.Model):
         related='so_id.so_media_agency_contacts_contact2_language',
         string='Agency Contact2 Language',
         size=16,
-        default='nl'
+        # default='NL'
     )
     creative_agency_code = fields.Char(
         string='Creative Number',
