@@ -263,7 +263,7 @@ class AccountInvoice(models.Model):
                     # 'line_sense':"debit" if sale_invoice else "credit",
                     'line_sense':sum_line_sense,
                     'line_origin':'dl_orig_additional',
-                    'due_date':datetime.strptime(mline.date, '%Y-%m-%d').strftime('%Y-%m-%d %H:%M:%S'),
+                    'due_date':datetime.strptime(self.date_due, '%Y-%m-%d').strftime('%Y-%m-%d %H:%M:%S'),
                     'media_code':'BI',
                     'user_ref1':UserRef1,
                     'user_ref2':'',
@@ -333,7 +333,7 @@ class AccountInvoice(models.Model):
                     'line_type': 'analysis',
                     'line_sense': ana_line_sense,
                     'line_origin': 'dl_orig_additional',
-                    'due_date': datetime.strptime(mline.date, '%Y-%m-%d').strftime('%Y-%m-%d %H:%M:%S'),
+                    'due_date': datetime.strptime(self.date_due, '%Y-%m-%d').strftime('%Y-%m-%d %H:%M:%S'),
                     # 'code': 'VFL21' if self.type == 'out_invoice' else 'VCL21',
                     'code': tax_data['doc_type'],
                     'short_name': tax_data['short_name'],
@@ -361,7 +361,7 @@ class AccountInvoice(models.Model):
                     lvals.update({'move_line_id': mline.id,
                                   'doc_value': mline.credit or mline.debit,
                                   'code': tax_datas[mline.tax_line_id]['doc_type'],
-                                  'due_date': datetime.strptime(mline.date, '%Y-%m-%d').strftime(
+                                  'due_date': datetime.strptime(self.date_due, '%Y-%m-%d').strftime(
                                       '%Y-%m-%d %H:%M:%S'),
                                   })
 
