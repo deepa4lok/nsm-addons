@@ -5,4 +5,9 @@
         <field name="name">Roularta Interface Manager</field>
     </record>
 
+    <record id="group_no_partner_edit_check" model="res.groups">
+        <field name="name">No Partner Modification</field>
+        <field name="category_id" ref="base.module_category_extra"/>
+    </record>
+
 </odoo>

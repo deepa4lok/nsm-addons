@@ -506,7 +506,9 @@ class MovefromOdootoRoularta(models.Model):
             for line in acc.roularta_invoice_line:
                 acc.account_roularta_response_message = line.roularta_response_message
                 acc.account_roularta_response_code = line.roularta_response
-                if line.roularta_response != 200:
+                if line.roularta_response == 500 and 'already exists' in line.roularta_response_message:
+                    acc.status = 'successful'
+                elif line.roularta_response != 200:
                     acc.account_roularta_response = False
                     acc.status = 'failed'
                 elif line.roularta_response == 200:
@@ -570,6 +572,10 @@ class MovefromOdootoRoularta(models.Model):
                 self.env['account.invoice.line'].search(
                     [('invoice_id', '=', self.invoice_id.id)]).write(
                     {'roularta_sent': True})
+            elif response.status_code == 500 and 'already exists' in response.text:
+                self.env['account.invoice.line'].search(
+                    [('invoice_id', '=', self.invoice_id.id)]).write(
+                    {'roularta_sent': True})
             # else:
             #     return
         acc = self.env['account.invoice'].search(
@@ -584,7 +590,9 @@ class MovefromOdootoRoularta(models.Model):
     @api.model
     def update_roularta_status(self):
         for acc in self.search([]):
-            if acc.account_roularta_response_code > 200:
+            if acc.account_roularta_response_code == 500 and 'already exists' in acc.account_roularta_response_message :
+                acc.status = 'successful'
+            elif acc.account_roularta_response_code > 200:
                 acc.status = 'failed'
             elif acc.account_roularta_response_code == 200:
                 acc.status = 'successful'
