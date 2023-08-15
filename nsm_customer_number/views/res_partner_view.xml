@@ -8,6 +8,7 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='ref']" position="replace"/>
                 <xpath expr="//field[@name='category_id']" position="after">
+                    <field name="roularta_customer_name"/>
                     <field name="ref" string="Klantnummer Roularta"/>
                     <field name="nsm_customer_number"/>
                 </xpath>

@@ -7,4 +7,5 @@ class Partner(models.Model):
         help='This is old customer "ref" code.',
         readonly= True
     )
+    roularta_customer_name = fields.Char('Roularta Customer Name')
 

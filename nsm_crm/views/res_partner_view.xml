@@ -15,6 +15,7 @@
       <record id="view_partner_tree" model="ir.ui.view">
             <field name="name">res.partner.tree.nsm</field>
             <field name="model">res.partner</field>
+            <field name="active">False</field>
             <field name="inherit_id" ref="sale_advertising_order.view_partner_tree_nsm_crm"/>
             <field name="arch" type="xml">
                     <field name="name" position="replace">

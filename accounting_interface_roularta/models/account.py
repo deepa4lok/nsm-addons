@@ -589,16 +589,21 @@ class MovefromOdootoRoularta(models.Model):
 
     @api.model
     def update_roularta_status(self):
-        for acc in self.search([]):
-            if acc.account_roularta_response_code == 500 and 'already exists' in acc.account_roularta_response_message :
+        starting_day_of_current_year = datetime.now().date().replace(month=1, day=1)
+        ending_day_of_current_year = datetime.now().date().replace(month=12, day=31)
+        for acc in self.search([
+            ('invoice_id.date_invoice','>=', starting_day_of_current_year),
+            ('invoice_id.date_invoice', '<=', ending_day_of_current_year),
+            ('account_roularta_response_code', '=', 500)
+        ]):
+            if 'already exists' in acc.account_roularta_response_message:
                 acc.status = 'successful'
-            elif acc.account_roularta_response_code > 200:
-                acc.status = 'failed'
-            elif acc.account_roularta_response_code == 200:
-                acc.status = 'successful'
-            else:
-                acc.status = 'draft'
-
+            # elif acc.account_roularta_response_code > 200:
+            #     acc.status = 'failed'
+            # elif acc.account_roularta_response_code == 200:
+            #     acc.status = 'successful'
+            # else:
+            #     acc.status = 'draft'
 
 class MoveLinefromOdootoRoularta(models.Model):
     _name = 'move.line.odooto.roularta'
