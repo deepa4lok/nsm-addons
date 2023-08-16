@@ -275,10 +275,6 @@ class AccountInvoice(models.Model):
                 summary_seq += 1
 
             # Analysis line
-            ana_line_sense = 'credit'
-            if invoice_type in ('in_invoice', 'out_refund'):
-                ana_line_sense = 'debit'
-
             roularta_account_code = 'K01490'
             if invoice_type in ('in_invoice', 'in_refund'):
                 roularta_account_code = 'K01410'
@@ -345,6 +341,10 @@ class AccountInvoice(models.Model):
                 summary_seq += 1
 
             # Tax line
+            tax_line_sense = 'credit'
+            if invoice_type in ('in_invoice', 'out_refund'):
+                tax_line_sense = 'debit'
+
             tax_mv_lines = self.move_id.line_ids.filtered(lambda ml: ml.account_id in invoice_tax_account)
 
             if not tax_mv_lines:
@@ -393,7 +393,7 @@ class AccountInvoice(models.Model):
                     'dual_rate': 40.339900000,
                     'doc_rate': 1.000000000,
                     'line_type': 'tax',
-                    'line_sense': ana_line_sense,
+                    'line_sense': tax_line_sense,
                     'line_origin': 'dl_orig_gentax',
                     'doc_tax_turnover': self.amount_untaxed
                 })

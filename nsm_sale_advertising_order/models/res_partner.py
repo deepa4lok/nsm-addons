@@ -31,11 +31,13 @@ class ResPartner(models.Model):
         for record in partner_ids:
             str_name = record.name
             if domain:
-                if record.zip and domain == 'zip':
-                    name = '['+record.ref+']'+str_name+'['+record.zip+']'
-                    res.append((record.id, name))
-                elif record.ref and domain == 'ref':
-                    name = '['+record.ref+']'+str_name+'['+record.zip+']'
+                if (record.zip or record.ref) and (domain == 'zip' or domain == 'ref'):
+                    if record.zip and record.ref:
+                        name = '['+record.ref +']'+str_name+'['+record.zip+']'
+                    elif record.ref:
+                        name = '[' + record.ref + ']' + str_name
+                    elif record.zip:
+                        name = str_name + '[' + record.zip + ']'
                     res.append((record.id, name))
                 else:
                     res.append((record.id, str_name))
