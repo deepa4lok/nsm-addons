@@ -11,6 +11,9 @@ from odoo.exceptions import UserError
 from collections import OrderedDict
 import re
 
+import logging
+_logger = logging.getLogger(__name__)
+
 
 class AccountInvoice(models.Model):
     _inherit = 'account.invoice'
@@ -567,24 +570,30 @@ class MovefromOdootoRoularta(models.Model):
             raise UserError(_(
                 'This Account Invoice already has been succesfully sent to Roularta.'))
         if self.roularta_invoice_line:
-            response = self.roularta_invoice_line.call_roularta(self, xml)
-            if response.status_code == 200:
-                self.env['account.invoice.line'].search(
-                    [('invoice_id', '=', self.invoice_id.id)]).write(
-                    {'roularta_sent': True})
-            elif response.status_code == 500 and 'already exists' in response.text:
-                self.env['account.invoice.line'].search(
-                    [('invoice_id', '=', self.invoice_id.id)]).write(
-                    {'roularta_sent': True})
-            # else:
-            #     return
-        acc = self.env['account.invoice'].search(
-            [('id', '=', self.invoice_id.id)])
-        accvals = {'date_sent_roularta': datetime.now(),
+            try:
+
+                response = self.roularta_invoice_line.call_roularta(self, xml)
+                if response.status_code == 200:
+                    self.env['account.invoice.line'].search(
+                        [('invoice_id', '=', self.invoice_id.id)]).write(
+                        {'roularta_sent': True})
+                elif response.status_code == 500 and 'already exists' in response.text:
+                    self.env['account.invoice.line'].search(
+                        [('invoice_id', '=', self.invoice_id.id)]).write(
+                        {'roularta_sent': True})
+            except Exception as e:
+                _logger.error("Error2: Roularta Interface call: %s" % (e.message or repr(e)))
+                # else:
+                #     return
+            acc = self.env['account.invoice'].search(
+                [('id', '=', self.invoice_id.id)])
+            accvals = {'date_sent_roularta': datetime.now(),
                   'roularta_log_id': self.id,
                   }
-        if acc:
-            acc.write(accvals)
+            if acc:
+                acc.write(accvals)
+
+
         return True
 
     @api.model

@@ -9,7 +9,7 @@
                 <xpath expr="//field[@name='ref']" position="replace"/>
                 <xpath expr="//field[@name='category_id']" position="after">
                     <field name="roularta_customer_name"/>
-                    <field name="ref" string="Klantnummer Roularta"/>
+                    <field name="ref" string="Customer Number RFF"/>
                     <field name="nsm_customer_number"/>
                 </xpath>
             </field>
