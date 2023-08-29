@@ -366,6 +366,7 @@ class AccountInvoice(models.Model):
                                   'code': tax_datas[mline.tax_line_id]['doc_type'],
                                   'due_date': datetime.strptime(self.date_due, '%Y-%m-%d').strftime(
                                       '%Y-%m-%d %H:%M:%S'),
+                                  'line_sense': 'debit' if mline.debit > 0 else 'credit',
                                   })
 
                 elif mline._name == 'account.invoice.tax':
@@ -373,12 +374,14 @@ class AccountInvoice(models.Model):
                         'doc_value': mline.amount,
                         'code': tax_datas[mline.tax_id]['doc_type'],
                         'due_date': datetime.strptime(self.date_due, '%Y-%m-%d').strftime('%Y-%m-%d %H:%M:%S'),
+                        'line_sense': tax_line_sense,
                     })
                 elif tax_datas:
                     lvals.update({
                         'doc_value': 0,
                         'code': tax_datas.values()[0]['doc_type'],
                         'due_date': datetime.strptime(self.date_due, '%Y-%m-%d').strftime('%Y-%m-%d %H:%M:%S'),
+                        'line_sense': tax_line_sense,
                     })
                     if type in ('out_refund', 'in_refund'):
                         account_id = mline.refund_account_id
@@ -396,7 +399,6 @@ class AccountInvoice(models.Model):
                     'dual_rate': 40.339900000,
                     'doc_rate': 1.000000000,
                     'line_type': 'tax',
-                    'line_sense': tax_line_sense,
                     'line_origin': 'dl_orig_gentax',
                     'doc_tax_turnover': self.amount_untaxed
                 })
