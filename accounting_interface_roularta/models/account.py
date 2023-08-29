@@ -573,7 +573,6 @@ class MovefromOdootoRoularta(models.Model):
                 'This Account Invoice already has been succesfully sent to Roularta.'))
         if self.roularta_invoice_line:
             try:
-
                 response = self.roularta_invoice_line.call_roularta(self, xml)
                 if response.status_code == 200:
                     self.env['account.invoice.line'].search(
@@ -791,14 +790,15 @@ class MoveLinefromOdootoRoularta(models.Model):
         }
 
         try:
+            inv.write({'xml_message': str(xmlData)})
             response = requests.request("POST", url, headers=headers, data=str(xmlData), auth=HTTPBasicAuth(user, pwd))
-
+            _logger.info("Roularta Response: %s %s" % (response, (response.text).encode('utf-8')))
             self.write({
                 'roularta_response': response.status_code,
-                'roularta_response_message': response.text,
-            })
-            inv.write({'xml_message': str(xmlData)})
+                'roularta_response_message': (response.text).encode('utf-8'),
+            })            
         except Exception as e:
+
             raise FailedJobError(
                 _('Error Roularta Interface call: %s') % (e))
         return response
