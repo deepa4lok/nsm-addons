@@ -12,6 +12,8 @@
             <field name="arch" type="xml">
                 <form string="Move to Roularta" create="false" edit="false" delete="false" copy="false">
                     <header>
+                         <button name="test_payload" type="object" string="Generate Payload"/>
+                         <button name="test_response" type="object" string="Call Roularta Interface"/>
                         <field name="status" widget="statusbar" statusbar_visible="draft,successful,failed" statusbar_colors='{"draft":"blue","successful":"blue", "failed":"red"}'/>
                     </header>
                     <sheet string="Move to Roularta">

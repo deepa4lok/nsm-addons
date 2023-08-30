@@ -578,7 +578,7 @@ class MovefromOdootoRoularta(models.Model):
                     self.env['account.invoice.line'].search(
                         [('invoice_id', '=', self.invoice_id.id)]).write(
                         {'roularta_sent': True})
-                elif response.status_code == 500 and 'already exists' in response.text:
+                elif response.status_code == 500 and 'already exists' in (response.text).encode('utf-8'):
                     self.env['account.invoice.line'].search(
                         [('invoice_id', '=', self.invoice_id.id)]).write(
                         {'roularta_sent': True})
@@ -614,6 +614,17 @@ class MovefromOdootoRoularta(models.Model):
             #     acc.status = 'successful'
             # else:
             #     acc.status = 'draft'
+
+    @api.multi
+    def test_payload(self):
+        config = self.env['roularta.config'].search([], limit=1)
+        self.roularta_invoice_line.generate_payload(self, config)
+        return True
+
+    @api.multi
+    def test_response(self):
+        self.roularta_invoice_line.call_roularta(self)
+        return True
 
 class MoveLinefromOdootoRoularta(models.Model):
     _name = 'move.line.odooto.roularta'
@@ -659,6 +670,7 @@ class MoveLinefromOdootoRoularta(models.Model):
 
     def generate_payload(self, inv, config):
         xmlData = ''
+        _logger.info("\n\nRoularta (generate_payload start):")
         try:
             trans_code = ''
             invoice = inv.invoice_id
@@ -733,6 +745,8 @@ class MoveLinefromOdootoRoularta(models.Model):
 
                 transaction_lines.append(entry)
 
+            _logger.info("\n\nRoularta (generate_payload debugging point 2):")
+
             xmlDt = OrderedDict([
                 ('soapenv:Envelope', OrderedDict([
                     ('@xmlns:soapenv', 'http://schemas.xmlsoap.org/soap/envelope/'),
@@ -781,17 +795,22 @@ class MoveLinefromOdootoRoularta(models.Model):
             ])
 
             xmlData = xmltodict.unparse(xmlDt, pretty=True, full_document=False)
+            inv.write({'xml_message': str(xmlData.encode('utf-8'))})
+            _logger.info("\n\nRoularta (generate_payload debugging point 3):")
         except Exception as e:
+            _logger.info("\n\n'Error: Cannot create xml data (%s).')" % e)
             raise UserError(_('Error: Cannot create xml data (%s).') % e)
         return xmlData
 
     def call_roularta(self, inv, xml=False):
+        _logger.info("\n\nRoularta Response(debugging point 1):")
         config = self.env['roularta.config'].search([], limit=1)
         url = str(config.host)
         user = str(config.username)
         pwd = str(config.password)
 
         xmlData = self.generate_payload(inv, config)
+        _logger.info("\n\nRoularta Response(debugging point 2):")
 
         headers = {
             'SOAPAction': 'uri-coda-webservice/14.000.0030/finance/Input/Post',
@@ -799,15 +818,18 @@ class MoveLinefromOdootoRoularta(models.Model):
         }
 
         try:
-            inv.write({'xml_message': str(xmlData.encode('utf-8'))})
-            response = requests.request("POST", url, headers=headers, data=str(xmlData), auth=HTTPBasicAuth(user, pwd))
+            # inv.write({'xml_message': str(xmlData.encode('utf-8'))})
+            _logger.info("\n\nRoularta Response(debugging point 3):")
+            response = requests.request("POST", url, headers=headers, data=str(xmlData.encode('utf-8')), auth=HTTPBasicAuth(user, pwd))
+            _logger.info("\n\nRoularta Response(debugging point 4):")
             _logger.info("Roularta Response: %s %s" % (response, (response.text).encode('utf-8')))
             self.write({
                 'roularta_response': response.status_code,
                 'roularta_response_message': (response.text).encode('utf-8'),
             })
+            _logger.info("\n\nRoularta Response(debugging point 5):")
         except Exception as e:
-
+            _logger.info("\n\nRoularta Response(debugging point 6):")
             raise FailedJobError(
                 _('Error Roularta Interface call: %s') % (e))
         return response
