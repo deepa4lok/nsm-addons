@@ -19,6 +19,7 @@ class ProofNumberDeliveryList(models.Model):
             line.proof_lastname = proof_payer.lastname or ''
             line.proof_country_code = proof_payer.country_id.code or ''
             line.proof_zip = proof_payer.zip or ''
+            line.proof_email = proof_payer.email or ''
             line.proof_street_number = proof_payer.street_number or ''
             line.proof_street_name = proof_payer.street_name or ''
             line.proof_city = proof_payer.city or ''
@@ -47,6 +48,7 @@ class ProofNumberDeliveryList(models.Model):
     proof_city = fields.Char(compute='_get_proof_data', readonly=True, store=False, string="City")
     proof_partner_name = fields.Char(compute='_get_proof_data', readonly=True, store=False, string="Name")
     proof_number_amt = fields.Integer(compute='_get_proof_data', readonly=True, store=False, string="Proof Number Amount")
+    proof_email = fields.Char(compute='_get_proof_data', readonly=True, store=False, string="Email")
 
     @api.model_cr
     def init(self):

@@ -8,9 +8,9 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='ref']" position="replace"/>
                 <xpath expr="//field[@name='category_id']" position="after">
-                    <field name="roularta_customer_name"/>
+                    <field name="roularta_customer_name" string="Customer name RFF"/>
                     <field name="ref" string="Customer Number RFF"/>
-                    <field name="nsm_customer_number"/>
+                    <field name="nsm_customer_number" string="Customer number NSM"/>
                 </xpath>
             </field>
       </record>

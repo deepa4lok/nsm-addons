@@ -12,8 +12,8 @@
             <field name="arch" type="xml">
                 <form string="Move to Roularta" create="false" edit="false" delete="false" copy="false">
                     <header>
-                         <button name="test_payload" type="object" string="Generate Payload"/>
-                         <button name="test_response" type="object" string="Call Roularta Interface"/>
+                         <button name="create_payload" type="object" string="Generate Payload" attrs="{'invisible':[('status', '=', 'successful')]}"/>
+                         <button name="roularta_response" type="object" string="Call Roularta Interface" attrs="{'invisible':[('status', '=', 'successful')]}"/>
                         <field name="status" widget="statusbar" statusbar_visible="draft,successful,failed" statusbar_colors='{"draft":"blue","successful":"blue", "failed":"red"}'/>
                     </header>
                     <sheet string="Move to Roularta">
@@ -142,6 +142,10 @@
                             <field name="roularta_sent"/>
                             <field name="date_sent_roularta"/>
                             <field name="roularta_log_id"/>
+                        </group>
+                        <group>
+                            <field name="roularta_response_code"/>
+                            <field name="roularta_response_message"/>
                         </group>
                     </page>
                 </xpath>

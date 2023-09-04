@@ -23,6 +23,7 @@
                         <field name="proof_city" />
                         <field name="proof_number_amt"/>
                         <field name="proof_partner_name"/>
+                        <field name="proof_email"/>
                 </tree>
             </field>
         </record>
@@ -49,6 +50,7 @@
                                 <field name="proof_infix" />
                                 <field name="proof_lastname"/>
                                 <field name="proof_country_code"/>
+                                <field name="proof_email"/>
                                 <field name="proof_zip"/>
                                 <field name="proof_street_number"/>
                                 <field name="proof_street_name"/>
