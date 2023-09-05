@@ -53,6 +53,7 @@ class NSMDeliveryListReport(ReportXlsx):
                 amount += orderLine.proof_number_amt_payer
             records.append(amount)
             records.append(customer.name if parent else '')
+            records.append(customer.email or parent.email or '')
             return records
 
         def _form_data(proofLines):
@@ -67,7 +68,7 @@ class NSMDeliveryListReport(ReportXlsx):
             return row_datas
 
         header = ['PAPERCODE', 'CUSTOMER NAME', 'VOORLETTERS', 'TUSSENVOEGSEL', 'ACHTERNAAM', 'COUNTRY CODE', 'ADDRESS ZIP',
-                  'HUISNUMMER', 'AANVULLING', 'ADDRESS STREET', 'ADDRESS CITY', 'AANTAL', 'CONTACT PERSOON']
+                  'HUISNUMMER', 'AANVULLING', 'ADDRESS STREET', 'ADDRESS CITY', 'AANTAL', 'CONTACT PERSOON', 'EMAIL']
 
         row_datas = _form_data(proofLines)
 

@@ -50,7 +50,7 @@ class AccountInvoice(models.Model):
 
     partner_ref = fields.Char(related='partner_id.ref', string='Partner Ref#', readonly=True, store=True)
     roularta_response_code = fields.Integer(related='roularta_log_id.account_roularta_response_code', string='Response Code', readonly=True, store=True)
-    roularta_response_message = fields.Text(related='roularta_log_id.xml_message', string='Response Message', readonly=True, store=True)
+    roularta_response_text = fields.Text(related='roularta_log_id.account_roularta_response_message', string='Response Message', readonly=True, store=True)
 
     @api.multi
     def action_cancel(self):

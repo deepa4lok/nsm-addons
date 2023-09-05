@@ -145,7 +145,7 @@
                         </group>
                         <group>
                             <field name="roularta_response_code"/>
-                            <field name="roularta_response_message"/>
+                            <field name="roularta_response_text"/>
                         </group>
                     </page>
                 </xpath>
