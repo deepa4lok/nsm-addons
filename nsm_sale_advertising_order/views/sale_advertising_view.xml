@@ -86,6 +86,12 @@
                 <xpath expr="//field[@name='partner_id']" position="attributes">
                     <attribute name="context">{'search_default_customer':1, 'show_address': 1, 'update_partner_ref':True}</attribute>
                 </xpath>
+                <xpath expr="//field[@name='issue_date']" position="after">
+                    <field name="deadline"/>
+                </xpath>
+                <xpath expr="//field[@name='order_line']/tree/field[@name='issue_date']" position="after">
+                    <field name="deadline"/>
+                </xpath>
             </field>
         </record>
 

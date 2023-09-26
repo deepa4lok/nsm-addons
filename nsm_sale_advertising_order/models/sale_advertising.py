@@ -235,6 +235,7 @@ class SaleOrderLine(models.Model):
     adv_issue_parent = fields.Many2one(related='adv_issue.parent_id', string='Advertising Issue Parent', readonly=True, store=True)
     product_template_domain = fields.Char(compute="_compute_product_template_domain", string="Product Template Domain")
     ad_number = fields.Char('External Reference', size=50)
+    deadline = fields.Datetime(related='adv_issue.deadline', string='Deadline')
 
     @api.model
     def fields_get(self, fields=None, attributes=None):

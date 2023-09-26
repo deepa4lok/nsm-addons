@@ -635,7 +635,7 @@ class SoLinefromOdootoAd4all(models.Model):
     paper_pub_date = fields.Date(
         string='Issue Date'
     )
-    paper_deadline = fields.Date(
+    paper_deadline = fields.Datetime(
         string='Deadline Date'
     )
     # paper_id = fields.Integer(
@@ -934,7 +934,7 @@ class SoLinefromOdootoAd4all(models.Model):
             order_code=int(float(self.adgr_orde_id.id))
         )
         paper_deadline = datetime.datetime.strptime(
-            self.paper_deadline, '%Y-%m-%d').strftime('%Y%m%d') \
+            self.paper_deadline, '%Y-%m-%d %H:%M:%S').strftime('%Y%m%d%H%M%S') \
             if self.paper_deadline else ''
         paper_pub_date = datetime.datetime.strptime(
             self.paper_pub_date, '%Y-%m-%d').strftime(
