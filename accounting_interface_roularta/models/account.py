@@ -808,7 +808,9 @@ class MoveLinefromOdootoRoularta(models.Model):
         xmlData = self.generate_payload(inv, config)
 
         try:
-            response = requests.request("POST", url, headers=headers, data=str(xmlData.encode('utf-8')), auth=HTTPBasicAuth(user, pwd))
+            # response = requests.request("POST", url, headers=headers, data=str(xmlData.encode('utf-8')), auth=HTTPBasicAuth(user, pwd))
+            response = requests.post(url, headers=headers, data=xmlData, auth=HTTPBasicAuth(user, pwd))
+
             self.write({
                 'roularta_response': response.status_code,
                 'roularta_response_message': response.text,
