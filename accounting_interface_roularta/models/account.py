@@ -580,11 +580,11 @@ class MovefromOdootoRoularta(models.Model):
             response = self.roularta_invoice_line.call_roularta(self, xml)
             if response.status_code == 200:
                 self.env['account.move.line'].search(
-                    [('invoice_id', '=', self.invoice_id.id)]).write(
+                    [('move_id', '=', self.invoice_id.id)]).write(
                     {'roularta_sent': True})
             elif response.status_code == 500 and 'already exists' in response.text:
                 self.env['account.move.line'].search(
-                    [('invoice_id', '=', self.invoice_id.id)]).write(
+                    [('move_id', '=', self.invoice_id.id)]).write(
                     {'roularta_sent': True})
             # else:
             #     return
