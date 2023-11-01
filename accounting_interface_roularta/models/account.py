@@ -249,6 +249,9 @@ class AccountMove(models.Model):
                 # else:
                 #     msg = 'Partner and Parent have no RFF number.'
 
+                if partner.ref[0] != 'R':
+                    msg = 'Partner and Parent have no RFF number.'
+
                 if not mline.account_id.ext_account:
                     msg += 'Summary Error: %s external account is missing!\n' % mline.account_id.name
                 if msg:
@@ -325,6 +328,10 @@ class AccountMove(models.Model):
                     _create_exception_roularta_move(vals)
                     return
 
+                pattern = re.compile('<.*?>')
+                desc = re.sub(pattern, '', mline.name)
+                desc = re.sub('[^A-Za-z0-9]+', ' ', desc)
+
                 lvals = {
                     'move_line_id': mline.id,
                     'number': summary_seq,
@@ -341,7 +348,7 @@ class AccountMove(models.Model):
                     'code': tax_data['doc_type'],
                     'short_name': tax_data['short_name'],
                     'ext_ref4': aa_code,
-                    'description': mline.name,
+                    'description': desc,
                     'value': total_tax_amount,
                 }
                 summary_lines.append((0, 0, lvals))
