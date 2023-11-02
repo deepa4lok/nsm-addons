@@ -214,11 +214,11 @@ class AccountMove(models.Model):
 
             #Determine partner
             partner = self.partner_id
-            if partner.ref[0] == 'R':
+            if partner.ref and partner.ref[0] == 'R':
                 partner = self.partner_id
             else:
                 if partner.parent_id:
-                    if partner.parent_id.ref[0] == 'R':
+                    if partner.parent_id.ref and partner.parent_id.ref[0] == 'R':
                         partner = self.partner_id.parent_id
                     else:
                         partner = self.partner_id
@@ -249,7 +249,7 @@ class AccountMove(models.Model):
                 # else:
                 #     msg = 'Partner and Parent have no RFF number.'
 
-                if partner.ref[0] != 'R':
+                if not partner.ref or (partner.ref and partner.ref[0] != 'R'):
                     msg = 'Partner and Parent have no RFF number.'
 
                 if not mline.account_id.ext_account:
