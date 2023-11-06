@@ -89,23 +89,26 @@ class AccountMove(models.Model):
 
         #domestic tax code with external_id
         domestic_xml_ext_ids = ['l10n_nl.1_btw_21', 'l10n_nl.1_btw_21_buy','l10n_nl.1_btw_21_d','l10n_nl.1_btw_21_buy_d','l10n_nl.1_btw_21_buy_incl',
-                                'l10n_nl.1_btw_0','l10n_nl.1_btw_6','l10n_nl.1_btw_0_d','l10n_nl.1_btw_6_d','l10n_nl.1_btw_6_buy',
+                                'l10n_nl.1_btw_0','l10n_nl.1_btw_6', 'l10n_nl.1_btw_9', 'l10n_nl.1_btw_0_d','l10n_nl.1_btw_6_d','l10n_nl.1_btw_6_buy',
                                 'l10n_nl.1_btw_6_buy_incl','l10n_nl.1_btw_6_buy_d','l10n_nl.1_btw_overig','l10n_nl.1_btw_overig_d',
                                 'l10n_nl.1_btw_overig_buy','l10n_nl.1_btw_overig_buy_d','l10n_nl.1_btw_verk_0','l10n_nl.1_btw_ink_0',
-                                'l10n_nl.1_btw_ink_0_1', 'l10n_nl.1_btw_ink_0_2']
+                                'l10n_nl.1_btw_ink_0_1', 'l10n_nl.1_btw_ink_0_2', 'l10n_nl.1_btw_9_d', 'l10n_nl.1_btw_9_buy', 'l10n_nl.1_btw_9_buy_incl',
+                                'l10n_nl.1_btw_9_buy_d']
 
         # EU tax ext code
         EU_xml_ext_ids = ['l10n_nl.1_btw_I_6', 'l10n_nl.1_btw_I_21', 'l10n_nl.1_btw_I_overig', 'l10n_nl.1_btw_X0', 'l10n_nl.1_btw_X2',
                           'l10n_nl.1_btw_I_6_d', 'l10n_nl.1_btw_I_21_d', 'l10n_nl.1_btw_I_overig_d', 'l10n_nl.1_btw_I_6_1', 'l10n_nl.1_btw_I_21_1',
                         'l10n_nl.1_btw_I_6_d_1', 'l10n_nl.1_btw_I_21_d_1', 'l10n_nl.1_btw_I_6_2', 'l10n_nl.1_btw_I_21_2', 'l10n_nl.1_btw_I_6_d_2',
-                        'l10n_nl.1_btw_I_21_d_2', 'l10n_nl.1_btw_I_overig_2', 'l10n_nl.1_btw_I_overig_d_2', 'l10n_nl.1_btw_I_overig_1', 'l10n_nl.1_btw_I_overig_d_1']
+                        'l10n_nl.1_btw_I_21_d_2', 'l10n_nl.1_btw_I_overig_2', 'l10n_nl.1_btw_I_overig_d_2', 'l10n_nl.1_btw_I_overig_1', 'l10n_nl.1_btw_I_overig_d_1',
+                          'l10n_nl.1_btw_I_9', 'l10n_nl.1_btw_X0_producten', 'l10n_nl.1_btw_X0_diensten','l10n_nl.1_btw_I_9_d', ]
 
         # Outside EU tax ext code
         OEU_xml_ext_ids = ['l10n_nl.1_btw_E1', 'l10n_nl.1_btw_E2', 'l10n_nl.1_btw_E_overig', 'l10n_nl.1_btw_X1',
                            'l10n_nl.1_btw_E1_d', 'l10n_nl.1_btw_E2_d', 'l10n_nl.1_btw_E_overig_d', 'l10n_nl.1_btw_E1_1',
                            'l10n_nl.1_btw_E2_1', 'l10n_nl.1_btw_E_overig_1', 'l10n_nl.1_btw_X3', 'l10n_nl.1_btw_E1_d_1',
                            'l10n_nl.1_btw_E2_d_1', 'l10n_nl.1_btw_E_overig_d_1', 'l10n_nl.1_btw_E1_2', 'l10n_nl.1_btw_E2_2',
-                           'l10n_nl.1_btw_E_overig_2', 'l10n_nl.1_btw_E1_d_2', 'l10n_nl.1_btw_E2_d_2', 'l10n_nl.1_btw_E_overig_d_2']
+                           'l10n_nl.1_btw_E_overig_2', 'l10n_nl.1_btw_E1_d_2', 'l10n_nl.1_btw_E2_d_2', 'l10n_nl.1_btw_E_overig_d_2',
+                           'l10n_nl.1_btw_E1_9', 'l10n_nl.1_btw_E1_d_9', 'l10n_nl.1_btw_E2_d', ]
 
         # if len(self.tax_line_ids.ids) > 1:
         #     raise UserError(_("Cant't send to roularta! More than one tax line!"))
@@ -118,7 +121,7 @@ class AccountMove(models.Model):
                 tax_type = 'purchase'
             tax_ids = self.env['account.tax'].search([('type_tax_use', '=', tax_type), ('roularta_no_tax', '=', True)], limit=1)
             if not tax_ids:
-                return [False, "Error: Roularta NO Tax' not found!"]
+                return [False, "Error: 'Roularta NO Tax' not found for type %s!"%tax_type]
 
         for tax_line in tax_ids:
             d_type = doc_type
