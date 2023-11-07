@@ -298,6 +298,15 @@ class AccountMove(models.Model):
 
                 tax_data = tax_datas[mline.tax_ids[0]] if mline.tax_ids else list(tax_datas.values())[0]
 
+                msg = ''
+                if mline.tax_ids:
+                    if mline.tax_ids[0] in tax_datas:
+                        tax_datas[mline.tax_ids[0]]
+                    else:
+                        msg += 'Analysis Error: Tax %s is missing in document %s!\n'%(mline.tax_ids[0], tax_datas)
+                else:
+                    list(tax_datas.values())[0]
+
                 aa_code = mline.analytic_account_id and str(mline.analytic_account_id.code)
 
                 if mline.debit > 0:
@@ -311,7 +320,6 @@ class AccountMove(models.Model):
                 for tax in taxes:
                     total_tax_amount += tax['amount']
 
-                msg = ''
                 # partner = mline.partner_id
                 # if mline.partner_id.type == 'invoice':
                 #     partner = mline.partner_id.parent_id
