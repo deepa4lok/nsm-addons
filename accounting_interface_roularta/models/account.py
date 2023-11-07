@@ -296,7 +296,7 @@ class AccountMove(models.Model):
             for mline in self.line_ids.filtered(
                         lambda ml: not ml.exclude_from_invoice_tab and ml.account_id not in invoice_tax_account):
 
-                tax_data = tax_datas[mline.tax_ids[0]] if mline.tax_ids else list(tax_datas.values())[0]
+                # tax_data = tax_datas[mline.tax_ids[0]] if mline.tax_ids else list(tax_datas.values())[0]
 
                 msg = ''
                 if mline.tax_ids:
