@@ -114,7 +114,8 @@ class AccountMove(models.Model):
         #     raise UserError(_("Cant't send to roularta! More than one tax line!"))
         tax_dic = {}
         # tax_ids = self.tax_line_ids
-        tax_ids = self.line_ids.filtered('tax_line_id')
+        # tax_ids = self.line_ids.filtered('tax_line_id') | self.invoice_line_ids.filtered('tax_ids')
+        tax_ids = self.line_ids.mapped('tax_line_id') | self.invoice_line_ids.mapped('tax_ids')
         if not tax_ids:
             tax_type = 'sale'
             if type in ('in_invoice', 'in_refund'):
@@ -124,13 +125,14 @@ class AccountMove(models.Model):
                 return [False, "Error: 'Roularta NO Tax' not found for type %s!"%tax_type]
 
         for tax_line in tax_ids:
+            tax = tax_line
             d_type = doc_type
             s_name = short_name
-            if not self.line_ids.filtered('tax_line_id'):
+            if not (self.line_ids.filtered('tax_line_id') or self.invoice_line_ids.filtered('tax_ids')):
                 tax = tax_line
                 tax_amt = '00'
             else:
-                tax = tax_line.tax_line_id
+                # tax = tax_line.tax_line_id
                 tax_amt = '0'+str(int(tax.amount)) if len(str(int(tax.amount))) == 1 else str(int(tax.amount))
             if tax.name in domestic_tax_name:
                 d_type += 'L'+tax_amt
@@ -301,11 +303,11 @@ class AccountMove(models.Model):
                 msg = ''
                 if mline.tax_ids:
                     if mline.tax_ids[0] in tax_datas:
-                        tax_datas[mline.tax_ids[0]]
+                        tax_data = tax_datas[mline.tax_ids[0]]
                     else:
                         msg += 'Analysis Error: Tax %s is missing in document %s!\n'%(mline.tax_ids[0], tax_datas)
                 else:
-                    list(tax_datas.values())[0]
+                    tax_data = list(tax_datas.values())[0]
 
                 aa_code = mline.analytic_account_id and str(mline.analytic_account_id.code)
 
