@@ -117,7 +117,7 @@
         </record>
 
         <record id="action_staged_ad4all" model="ir.actions.act_window">
-            <field name="name">Staged Ad4all</field>
+            <field name="name">Staged Ad4all Order</field>
             <field name="res_model">sofrom.odooto.ad4all</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
@@ -126,6 +126,63 @@
         </record>
 
         <menuitem id="menu_action_staged_ad4all" name="Staged Ad4all" parent="menu_ad4all" action="action_staged_ad4all"
+                  sequence="2"/>
+
+        <record id="view_sofrom_odooto_ad4all_line_tree" model="ir.ui.view">
+            <field name="name">view_sofrom_odooto_line_ad4all_tree</field>
+            <field name="model">soline.from.odooto.ad4all</field>
+            <field name="arch" type="xml">
+                <tree string="SO to Ad4all Line"
+                      create="false"
+                      edit="false"
+                      delete="true"
+                      copy="false"
+                      decoration-danger="ad4all_response"
+                      decoration-info="ad4all_response">
+                    <field name="advert_id"/>
+                    <field name="mat_id"/>
+                    <field name="line_ad4all_allow"/>
+                    <field name="ad4all_sent"/>
+                    <field name="no_copy_chase"/>
+                    <field name="so_id"/>
+                    <field name="customer_name"/>
+                    <field name="media_agency_name" />
+                    <field name="create_date" string="Creation Date"/>
+                    <field name="ad4all_response"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_sofrom_odooto_ad4all_line_filter" model="ir.ui.view">
+            <field name="name">view_sofrom_odooto_ad4all_line_filter</field>
+            <field name="model">soline.from.odooto.ad4all</field>
+            <field name="arch" type="xml">
+                <search string="Search Ad4all Line Updates">
+                    <field name="adgr_orde_id"/>
+                    <!--<field name="reference"/>-->
+                    <field name="customer_name"/>
+                    <field name="media_agency_name" />
+                    <filter name="success" string="Success"
+                            domain="[('ad4all_response','=',True)]"/>
+                    <separator/>
+                    <group expand="0" string="Group By">
+                        <filter name="create_date" string="Date" context="{'group_by':'create_date'}"/>
+                    </group>
+               </search>
+            </field>
+        </record>
+
+
+        <record id="action_staged_line_ad4all" model="ir.actions.act_window">
+            <field name="name">Ad4all Order Lines</field>
+            <field name="res_model">soline.from.odooto.ad4all</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="search_view_id" ref="view_sofrom_odooto_ad4all_line_filter"/>
+            <field name="context">{'search_default_exceptions':1}</field>
+        </record>
+
+        <menuitem id="menu_action_staged_line_ad4all" name="Staged Ad4all Order Line" parent="menu_ad4all" action="action_staged_line_ad4all"
                   sequence="2"/>
 
         <record id="view_order_form_advertising_ad4all" model="ir.ui.view">

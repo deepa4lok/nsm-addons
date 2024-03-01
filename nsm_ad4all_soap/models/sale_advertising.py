@@ -318,8 +318,10 @@ class SofromOdootoAd4all(models.Model):
     def _compute_response(self):
         for so in self:
             so.so_ad4all_response = True
+            if len(so.ad4all_so_line.ids) == 0:
+                so.so_ad4all_response = False
             for line in so.ad4all_so_line:
-                if line.ad4all_response != 200:
+                if line.ad4all_response and int(line.ad4all_response) not in (200, 500):
                     so.so_ad4all_response = False
                     break
 
@@ -567,6 +569,18 @@ class SoLinefromOdootoAd4all(models.Model):
         required=False,
         index=True,
         copy=False
+    )
+    line_ad4all_allow = fields.Boolean(
+        related='odoo_order_line.line_ad4all_allow',
+        string='Ad4all Allowed'
+    )
+    ad4all_sent = fields.Boolean(
+        related='odoo_order_line.ad4all_sent',
+        string='Order to Ad4all'
+    )
+    no_copy_chase = fields.Boolean(
+        related='odoo_order_line.no_copy_chase',
+        string='No Copy Chase',
     )
     ad4all_response = fields.Text(
         'Ad4all Response'
@@ -1056,6 +1070,7 @@ class SoLinefromOdootoAd4all(models.Model):
             self.write({
                 'ad4all_response': response['code'],
                 'json_message': order_obj.xml_data,
+                'reply_message':response['message'],
         })
         except Exception as e:
             raise FailedJobError(

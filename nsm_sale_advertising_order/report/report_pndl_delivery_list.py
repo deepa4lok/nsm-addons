@@ -88,3 +88,71 @@ class NSMDeliveryListReport(ReportXlsx):
 
 
 NSMDeliveryListReport('report.report_pndl_delivery_list.xlsx', 'proof.number.delivery.list')
+
+
+class NSMDeliveryListReportRoeselare(ReportXlsx):
+
+    def generate_xlsx_report(self, workbook, data, proofLines):
+
+        def _get_title(orderLine):
+            title = []
+            for advtitle in orderLine.title_ids:
+                if advtitle.product_attribute_value_id:
+                    title.append(advtitle.product_attribute_value_id.name)
+            if orderLine.title.product_attribute_value_id:
+                title.append(orderLine.title.product_attribute_value_id.name)
+            title = ",".join(list(set(title))) if title else ' '
+            return title
+
+        def _prepare_data(customer, orderLine):
+            records = []
+            parent = customer.parent_id
+            records.append(parent.name if parent else '')
+            records.append(customer.name if customer else '')
+            records.append(customer.street_name or parent.street_name or '')
+            records.append(customer.street_number or parent.street_number or '')
+            records.append('')
+            records.append('')
+            records.append(customer.zip or parent.zip or '')
+            records.append('')
+            records.append(customer.city or parent.city or '')
+            records.append(customer.country_id.code or parent.country_id.code or '')
+            amount = 0
+            if customer.id in orderLine.proof_number_adv_customer.ids:
+                amount += orderLine.proof_number_amt_adv_customer
+            if orderLine.proof_number_payer_id and orderLine.proof_number_payer_id.id == customer.id:
+                amount += orderLine.proof_number_amt_payer
+            records.append(amount)
+            records.append(_get_title(orderLine))
+            records.append(customer.email or parent.email or '')
+
+            return records
+
+        def _form_data(proofLines):
+            row_datas = []
+            for pLine in proofLines:
+                row_datas.append(_prepare_data(pLine.proof_number_payer, pLine.line_id))
+
+            return row_datas
+
+        header = ['FIRMANAAM', 'NAAM', 'STRAAT', 'HNR', 'HNR_TOEVOEG', 'BUS', 'POSTCODE',
+                  'POSTLETTERS', 'GEMEENTE', 'LANDCODE', 'VELD1_AANTAL', 'VELD2_TITELCODE', 'EMAIL']
+
+        row_datas = _form_data(proofLines)
+
+        if row_datas:
+            bold_format = workbook.add_format({'bold': True})
+            report_name = 'PNDL_{date:%Y-%m-%d %H:%M:%S}'.format(date=datetime.datetime.now())
+            sheet = workbook.add_worksheet(report_name[:31])
+            for i, title in enumerate(header):
+                sheet.write(0, i, title, bold_format)
+            for row_index, row in enumerate(row_datas):
+                for cell_index, cell_value in enumerate(row):
+                    sheet.write(row_index + 1, cell_index, cell_value)
+            workbook.close()
+        else:
+            raise UserError(_('No record found to print!'))
+
+
+
+NSMDeliveryListReportRoeselare('report.report_pndl_delivery_list_roeselare.xlsx', 'proof.number.delivery.list')

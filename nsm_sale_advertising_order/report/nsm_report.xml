@@ -40,5 +40,15 @@
             file="report_advertising_send_along_list.xlsx"
             attachment_use="False"
         />
+
+        <report
+            id="report_nsm_proof_delivery_list_report_roeselare_xlsx"
+            model="proof.number.delivery.list"
+            string="P.N.D.L. List XLSX - Roeselare"
+            report_type="xlsx"
+            name="report_pndl_delivery_list_roeselare.xlsx"
+            file="report_pndl_delivery_list_roeselare.xlsx"
+            attachment_use="False"
+        />
     </data>
 </odoo>
